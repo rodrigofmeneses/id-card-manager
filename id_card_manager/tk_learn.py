@@ -13,9 +13,9 @@ def find_button():
     escrever na tela e adicionar os novos widgets.
     '''
     dir_path = find_folder_dir()
-    write_dir_text(text=dir_path)
+    write_text_widget(dir_path_widget, dir_path)
     add_widgets()
-
+    print(dir_path)
 
 def save_button():
     ''' Botão 'Save'.
@@ -40,17 +40,17 @@ def find_folder_dir() -> Str:
     
     return path
 
-def write_dir_text(text: Str):
+def write_text_widget(widget, text: Str):
     '''
     Escreve um texto no widget 'dir_path'.
     
         text -> Texto a ser escrito em 'dir_path'. 
     '''
     try:
-        dir_path_widget.configure(state='normal')
-        dir_path_widget.delete('1.0', 'end')
-        dir_path_widget.insert('1.0', text)
-        dir_path_widget.configure(state='disabled')
+        widget.configure(state='normal')
+        widget.delete('1.0', 'end')
+        widget.insert('1.0', text)
+        widget.configure(state='disabled')
     except:
         print('Problema na escrita do text box')
 
@@ -74,10 +74,10 @@ def add_widgets():
     
 def test_func():
     dir_path = dir_path_widget.get('1.0', END)[:-1]
-    for matricula in os.listdir(dir_path):
-        pprint(dir_path + '/' +  matricula)
-
-
+    card_data = [dir_path + '/' +  matricula for matricula in os.listdir(dir_path)]
+    print(card_data)
+    write_text_widget(card_data_widget, card_data)
+        # pprint(dir_path + '/' +  matricula)
 
 root = Tk()
 root.title("ID Card Manager")
