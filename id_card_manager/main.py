@@ -1,25 +1,34 @@
-from ast import Str
-from multiprocessing.dummy import active_children
 from tkinter import *
-from tkinter.filedialog import askdirectory, asksaveasfile
+from tkinter.filedialog import askdirectory, askopenfilename, asksaveasfile
 from tkinter import ttk
-from pprint import pprint
+import pandas as pd
 import os
+from pprint import pprint
 
 # Script para automatizar a criação de crachás no formato
+''' Selecionar o arquivo com os dados
+    Selecionar a pasta com as fotos
+    Exibir na tela as informações
+    Criar o arquivo de leitura do photoshop
+'''
 
 def find_data_button():
-    print(len(folder_frame.winfo_children()))
+    ''' Botão 'Find Data'
+
+    '''
+    file_path.set(askopenfilename())
+    write_text_widget(file_path_widget, file_path.get())
+
     if len(folder_frame.winfo_children()) == 1:
         add_folder_frame_widgets()
 
 def find_folder_button():
-    ''' Botão 'Find'.
+    ''' Botão 'Find Folder'.
     Responsável por salvar o diretório onde estão as imagens 3x4,
     escrever na tela e adicionar os novos widgets.
     '''
-    dir_path = find_folder_dir()
-    write_text_widget(dir_path_widget, dir_path)
+    dir_path.set(askdirectory())
+    write_text_widget(dir_path_widget, dir_path.get())
     
     if len(buttons.winfo_children()) == 0:
         add_buttons_widgets()
@@ -34,20 +43,23 @@ def save_button():
     except:
         print('Error save file')
 
-def find_folder_dir() -> Str:
-    '''
-    Abre janela para localizar diretório.
-    return: Caminho para o diretório selecionado.
-    '''
-    try:
-        path = askdirectory()
-        assert path
-    except:
-        print('Campo de texto vazio')
-    
-    return path
+def read_data(file_path):
+    return pd.read_csv(file_path, sep=';')
 
-def write_text_widget(widget, text: Str):
+# def find_folder_dir() -> Str:
+#     '''
+#     Abre janela para localizar diretório.
+#     return: Caminho para o diretório selecionado.
+#     '''
+#     try:
+#         path = askdirectory()
+#         assert path
+#     except:
+#         print('Campo de texto vazio')
+    
+#     return path
+
+def write_text_widget(widget, text):
     '''
     Escreve um texto no widget 'dir_path'.
     
@@ -78,7 +90,6 @@ def add_folder_frame_widgets():
         before=buttons
     )
 
-
 def add_buttons_widgets():
     '''
     Adiciona os widgets na tela
@@ -91,10 +102,28 @@ def add_buttons_widgets():
     )
     
 def test_func():
-    dir_path = dir_path_widget.get('1.0', END)[:-1]
-    card_data = [dir_path + '/' +  matricula for matricula in os.listdir(dir_path)]
-    print(card_data)
-    write_text_widget(card_data_widget, card_data)
+    print(file_path.get())
+    df = pd.read_csv(file_path.get(), sep=';')
+    print(df)
+    matriculas = [matricula for matricula in os.listdir(dir_path.get())]
+    path_fotos = [dir_path.get() + '/' +  matricula for matricula in matriculas]
+
+    matriculas = [int(matricula.split('.')[0]) for matricula in matriculas]
+    
+    df = df[df.matricula.isin(matriculas)]
+    print(df)
+    df = df.sort_values('matricula')
+    print(df)
+    # Criar coluna no df com caminho
+    df = df.assign(foto = path_fotos)
+    # Criar coluna com respeito a visibilidade
+    df = df.assign(mostrar_foto = df.shape[0] * [True])
+
+    print(df)
+    # dir_path = dir_path_widget.get('1.0', END)[:-1]
+    # card_data = [dir_path + '/' +  matricula for matricula in os.listdir(dir_path)]
+    # print(card_data)
+    # write_text_widget(card_data_widget, card_data)
         # pprint(dir_path + '/' +  matricula)
 
 
@@ -112,21 +141,21 @@ ttk.Button(data_frame, text='Find Data', command=find_data_button).pack(
 ttk.Label(data_frame, text='Data:').pack(
     side=LEFT
 )
-data_path = ''
-data_path_widget = Text(data_frame, width=70, height=1, state='disabled')
-data_path_widget.pack(
+file_path = StringVar()
+file_path_widget = Text(data_frame, width=90, height=1, state='disabled')
+file_path_widget.pack(
     side=LEFT
 )
 data_frame.pack(**padding)
 
 folder_frame = ttk.Frame(mainframe)
 
-dir_path = ''
-dir_path_widget = Text(folder_frame, width=70, height=1, state='disabled')
+dir_path = StringVar()
+dir_path_widget = Text(folder_frame, width=90, height=1, state='disabled')
 folder_frame.pack(**padding)
 
-card_data = ''
-card_data_widget = Text(mainframe, width=80, state='disabled')
+card_data = StringVar()
+card_data_widget = Text(mainframe, width=105, state='disabled')
 
 buttons = ttk.Frame(mainframe)
 

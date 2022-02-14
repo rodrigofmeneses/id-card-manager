@@ -3,7 +3,7 @@ import os
 
 # Ler dados
 #df = pd.read_csv('Listagem de Empregados.csv', sep=';')
-df = pd.read_csv('Listagem de Empregados Extra.csv', sep=';')
+df = pd.read_csv('C:\\Users\\Mareg\\OneDrive\\Gráfica MArte\\Crachás\\Clientes\\SSPDS\\dados\\Listagem de Empregados.csv', sep=';')
 
 # Criar caminho para fotos
 # path_fotos = ['D:\\Gráfica MArte\\Crachás\\Detran 2021\\fotos\\3x4\\' + str(image) + '.jpg' for image in list(df['matricula'])]
@@ -24,5 +24,5 @@ df_frente = df.drop(columns=['nome', 'identidade', 'admissao'])
 df_verso = df.drop(columns=['nome_guerra', 'cargo', 'foto', 'mostrar_foto', 'lotacao'])
 
 # Salvar csv
-df_frente.to_csv('cracha_frente.csv', index=False)
-df_verso.to_csv('cracha_verso.csv', index=False)
+# df_frente.to_csv('cracha_frente.csv', index=False)
+# df_verso.to_csv('cracha_verso.csv', index=False)
