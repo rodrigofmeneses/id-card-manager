@@ -79,23 +79,36 @@ def test_func():
     write_text_widget(card_data_widget, card_data)
         # pprint(dir_path + '/' +  matricula)
 
+
 root = Tk()
 root.title("ID Card Manager")
 
 mainframe = ttk.Frame(root, padding='3 3 3 3')
 padding = {'padx': 5, 'pady': 5}
-folder_frame = ttk.Frame(mainframe)
 
+data_frame = ttk.Frame(mainframe)
+ttk.Button(data_frame, text='Find Data').pack(
+    side=LEFT,
+    padx=5
+)
+ttk.Label(data_frame, text='Data:').pack(
+    side=LEFT
+)
+data_path = ''
+data_path_widget = Text(data_frame, width=70, height=1, state='disabled')
+data_path_widget.pack(
+    side=LEFT
+)
+data_frame.pack(**padding)
+folder_frame = ttk.Frame(mainframe)
 ttk.Label(folder_frame, text='Find:').pack(
     side=LEFT
 )
-
 dir_path = ''
 dir_path_widget = Text(folder_frame, width=70, height=1, state='disabled')
 dir_path_widget.pack(
     side=RIGHT
 )
-
 card_data = ''
 card_data_widget = Text(mainframe, width=75, state='disabled')
 
