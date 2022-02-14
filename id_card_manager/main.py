@@ -1,4 +1,5 @@
 from ast import Str
+from multiprocessing.dummy import active_children
 from tkinter import *
 from tkinter.filedialog import askdirectory, asksaveasfile
 from tkinter import ttk
@@ -7,15 +8,21 @@ import os
 
 # Script para automatizar a criação de crachás no formato
 
-def find_button():
+def find_data_button():
+    print(len(folder_frame.winfo_children()))
+    if len(folder_frame.winfo_children()) == 1:
+        add_folder_frame_widgets()
+
+def find_folder_button():
     ''' Botão 'Find'.
     Responsável por salvar o diretório onde estão as imagens 3x4,
     escrever na tela e adicionar os novos widgets.
     '''
     dir_path = find_folder_dir()
     write_text_widget(dir_path_widget, dir_path)
-    add_widgets()
-    print(dir_path)
+    
+    if len(buttons.winfo_children()) == 0:
+        add_buttons_widgets()
 
 def save_button():
     ''' Botão 'Save'.
@@ -54,23 +61,34 @@ def write_text_widget(widget, text: Str):
     except:
         print('Problema na escrita do text box')
 
-def add_widgets():
+def add_folder_frame_widgets():
+    '''Adiciona os widgets do folder_frame
+    '''
+    ttk.Button(folder_frame, text="Find Folder", command=find_folder_button).pack(
+        side=LEFT,
+        padx=5
+    )
+    ttk.Label(folder_frame, text='Folder:').pack(
+        side=LEFT
+    )
+    dir_path_widget.pack(
+        side=LEFT
+    )
+    card_data_widget.pack(
+        before=buttons
+    )
+
+
+def add_buttons_widgets():
     '''
     Adiciona os widgets na tela
     '''
-    try:
-        assert len(buttons.winfo_children()) == 1
-        card_data_widget.pack(
-            before=buttons
-        )
-        ttk.Button(buttons, text="Save", command=save_button).pack(
-            side=LEFT
-        )   
-        ttk.Button(buttons, text="Test", command=test_func).pack(
-            side=LEFT
-        )
-    except:
-        print('Problema na insersão dos widgets')
+    ttk.Button(buttons, text="Save", command=save_button).pack(
+        side=LEFT
+    )   
+    ttk.Button(buttons, text="Test", command=test_func).pack(
+        side=LEFT
+    )
     
 def test_func():
     dir_path = dir_path_widget.get('1.0', END)[:-1]
@@ -87,7 +105,7 @@ mainframe = ttk.Frame(root, padding='3 3 3 3')
 padding = {'padx': 5, 'pady': 5}
 
 data_frame = ttk.Frame(mainframe)
-ttk.Button(data_frame, text='Find Data').pack(
+ttk.Button(data_frame, text='Find Data', command=find_data_button).pack(
     side=LEFT,
     padx=5
 )
@@ -100,25 +118,17 @@ data_path_widget.pack(
     side=LEFT
 )
 data_frame.pack(**padding)
+
 folder_frame = ttk.Frame(mainframe)
-ttk.Label(folder_frame, text='Find:').pack(
-    side=LEFT
-)
+
 dir_path = ''
 dir_path_widget = Text(folder_frame, width=70, height=1, state='disabled')
-dir_path_widget.pack(
-    side=RIGHT
-)
-card_data = ''
-card_data_widget = Text(mainframe, width=75, state='disabled')
-
 folder_frame.pack(**padding)
 
-buttons = ttk.Frame(mainframe)
+card_data = ''
+card_data_widget = Text(mainframe, width=80, state='disabled')
 
-ttk.Button(buttons, text="Find", command=find_button).pack(
-    side=LEFT
-)
+buttons = ttk.Frame(mainframe)
 
 buttons.pack(
     anchor=W,
