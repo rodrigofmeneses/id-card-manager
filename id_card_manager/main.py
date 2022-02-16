@@ -102,24 +102,29 @@ def add_buttons_widgets():
     )
     
 def test_func():
-    print(file_path.get())
     df = pd.read_csv(file_path.get(), sep=';')
     print(df)
-    matriculas = [matricula for matricula in os.listdir(dir_path.get())]
-    path_fotos = [dir_path.get() + '/' +  matricula for matricula in matriculas]
-
-    matriculas = [int(matricula.split('.')[0]) for matricula in matriculas]
-    
-    df = df[df.matricula.isin(matriculas)]
-    print(df)
-    df = df.sort_values('matricula')
-    print(df)
+    # Arquivos dentro da pasta selecionada
+    matriculas_jpg = [
+        matricula 
+        for matricula in os.listdir(dir_path.get())
+    ]
+    # Apenas suas matrículas
+    matriculas_dir_path = [
+        int(matricula.split('.')[0]) 
+        for matricula in matriculas_jpg
+    ]
+    # Composição completa de todos os funcionários
+    path_fotos = [
+        dir_path.get() + '/' +  str(matricula) + '.jpg' 
+        for matricula in df.matricula
+    ]    
     # Criar coluna no df com caminho
     df = df.assign(foto = path_fotos)
     # Criar coluna com respeito a visibilidade
-    df = df.assign(mostrar_foto = df.shape[0] * [True])
-
-    print(df)
+    df = df.assign(mostrar_foto = len(df) * [True])
+    # Filtrar por funcionários que tem foto
+    df = df[df.matricula.isin(matriculas_dir_path)]
     # dir_path = dir_path_widget.get('1.0', END)[:-1]
     # card_data = [dir_path + '/' +  matricula for matricula in os.listdir(dir_path)]
     # print(card_data)
