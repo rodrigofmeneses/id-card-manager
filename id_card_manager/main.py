@@ -1,4 +1,4 @@
-from tkinter import *
+import tkinter as tk
 from tkinter.filedialog import askdirectory, askopenfilename, asksaveasfile
 from tkinter import ttk
 import pandas as pd
@@ -12,26 +12,17 @@ from pprint import pprint
     Criar o arquivo de leitura do photoshop
 '''
 
-def find_data_button():
-    ''' Botão 'Find Data'
-
-    '''
-    file_path.set(askopenfilename())
-    write_text_widget(file_path_widget, file_path.get())
-
-    if len(folder_frame.winfo_children()) == 1:
-        add_folder_frame_widgets()
-
 def find_folder_button():
     ''' Botão 'Find Folder'.
     Responsável por salvar o diretório onde estão as imagens 3x4,
     escrever na tela e adicionar os novos widgets.
     '''
-    dir_path.set(askdirectory())
-    write_text_widget(dir_path_widget, dir_path.get())
-    
-    if len(buttons.winfo_children()) == 0:
-        add_buttons_widgets()
+    dialog_path = askdirectory()
+    try:
+        assert dialog_path != '', ''
+        dir_path.set(dialog_path)
+    except AssertionError:
+        print('Invalid dir path')
 
 def save_button():
     ''' Botão 'Save'.
@@ -43,132 +34,103 @@ def save_button():
     except:
         print('Error save file')
 
-def read_data(file_path):
-    return pd.read_csv(file_path, sep=';')
-
-# def find_folder_dir() -> Str:
-#     '''
-#     Abre janela para localizar diretório.
-#     return: Caminho para o diretório selecionado.
-#     '''
-#     try:
-#         path = askdirectory()
-#         assert path
-#     except:
-#         print('Campo de texto vazio')
+def test_button():
+    data_path = f'{dir_path.get()}\\dados\\dados.csv'
+    df = pd.read_csv(data_path)
     
-#     return path
+    data_widget["column"] = list(df.columns)
+    data_widget["show"] = "headings"
 
-def write_text_widget(widget, text):
-    '''
-    Escreve um texto no widget 'dir_path'.
-    
-        text -> Texto a ser escrito em 'dir_path'. 
-    '''
-    try:
-        widget.configure(state='normal')
-        widget.delete('1.0', 'end')
-        widget.insert('1.0', text)
-        widget.configure(state='disabled')
-    except:
-        print('Problema na escrita do text box')
+    for column in data_widget["columns"]:
+        data_widget.heading(column, text=column) # let the column heading = column name
 
-def add_folder_frame_widgets():
-    '''Adiciona os widgets do folder_frame
-    '''
-    ttk.Button(folder_frame, text="Find Folder", command=find_folder_button).pack(
-        side=LEFT,
-        padx=5
-    )
-    ttk.Label(folder_frame, text='Folder:').pack(
-        side=LEFT
-    )
-    dir_path_widget.pack(
-        side=LEFT
-    )
-    card_data_widget.pack(
-        before=buttons
-    )
+    df_rows = df.to_numpy().tolist() # turns the dataframe into a list of lists
+    for row in df_rows:
+        data_widget.insert("", "end", values=row) # inserts each list into the treeview. For parameters see https://docs.python.org/3/library/tkinter.ttk.html#tkinter.ttk.Treeview.insert
 
-def add_buttons_widgets():
-    '''
-    Adiciona os widgets na tela
-    '''
-    ttk.Button(buttons, text="Save", command=save_button).pack(
-        side=LEFT
-    )   
-    ttk.Button(buttons, text="Test", command=test_func).pack(
-        side=LEFT
-    )
-    
-def test_func():
-    df = pd.read_csv(file_path.get(), sep=';')
-    print(df)
     # Arquivos dentro da pasta selecionada
-    matriculas_jpg = [
-        matricula 
-        for matricula in os.listdir(dir_path.get())
-    ]
+    # matriculas_jpg = [
+    #     matricula 
+    #     for matricula in os.listdir(dir_path.get())
+    # ]
     # Apenas suas matrículas
-    matriculas_dir_path = [
-        int(matricula.split('.')[0]) 
-        for matricula in matriculas_jpg
-    ]
+    # matriculas_dir_path = [
+    #     int(matricula.split('.')[0]) 
+    #     for matricula in matriculas_jpg
+    # ]
     # Composição completa de todos os funcionários
-    path_fotos = [
-        dir_path.get() + '/' +  str(matricula) + '.jpg' 
-        for matricula in df.matricula
-    ]    
-    # Criar coluna no df com caminho
-    df = df.assign(foto = path_fotos)
-    # Criar coluna com respeito a visibilidade
-    df = df.assign(mostrar_foto = len(df) * [True])
-    # Filtrar por funcionários que tem foto
-    df = df[df.matricula.isin(matriculas_dir_path)]
-    # dir_path = dir_path_widget.get('1.0', END)[:-1]
-    # card_data = [dir_path + '/' +  matricula for matricula in os.listdir(dir_path)]
-    # print(card_data)
-    # write_text_widget(card_data_widget, card_data)
-        # pprint(dir_path + '/' +  matricula)
+    # path_fotos = [
+    #     dir_path.get() + '/' +  str(matricula) + '.jpg' 
+    #     for matricula in df.matricula
+    # ]    
+    # # Criar coluna no df com caminho
+    # df = df.assign(foto = path_fotos)
+    # # Criar coluna com respeito a visibilidade
+    # df = df.assign(mostrar_foto = len(df) * [True])
+    # # Filtrar por funcionários que tem foto
+    # df = df[df.matricula.isin(matriculas_dir_path)]
 
 
-root = Tk()
+root = tk.Tk()
 root.title("ID Card Manager")
+root.geometry('1000x500')
 
-mainframe = ttk.Frame(root, padding='3 3 3 3')
+# mainframe = ttk.Frame(root, padding='3 3 3 3')
 padding = {'padx': 5, 'pady': 5}
 
-data_frame = ttk.Frame(mainframe)
-ttk.Button(data_frame, text='Find Data', command=find_data_button).pack(
-    side=LEFT,
-    padx=5
+folder_frame = ttk.LabelFrame(root, text='Folder')
+
+dir_path = tk.StringVar()
+ttk.Button(folder_frame, text="Find", command=find_folder_button).pack(
+    side=tk.LEFT,
+    **padding
 )
-ttk.Label(data_frame, text='Data:').pack(
-    side=LEFT
+ttk.Label(folder_frame, text='Folder:').pack(
+    side=tk.LEFT,
+    **padding
 )
-file_path = StringVar()
-file_path_widget = Text(data_frame, width=90, height=1, state='disabled')
-file_path_widget.pack(
-    side=LEFT
+dir_path_widget = tk.Label(folder_frame, textvariable=dir_path)
+dir_path_widget.pack(
+    side=tk.LEFT,
+    fill='x',
+    **padding
 )
-data_frame.pack(**padding)
-
-folder_frame = ttk.Frame(mainframe)
-
-dir_path = StringVar()
-dir_path_widget = Text(folder_frame, width=90, height=1, state='disabled')
-folder_frame.pack(**padding)
-
-card_data = StringVar()
-card_data_widget = Text(mainframe, width=105, state='disabled')
-
-buttons = ttk.Frame(mainframe)
-
-buttons.pack(
-    anchor=W,
+folder_frame.pack(
+    fill='x',
     **padding
 )
 
-mainframe.pack()
+data_frame = ttk.LabelFrame(root, text='Data')
+data_frame.pack(
+    fill='x',
+    **padding
+)
+
+data_widget = ttk.Treeview(data_frame)
+
+treescrolly = tk.Scrollbar(data_frame, orient="vertical", command=data_widget.yview) # command means update the yaxis view of the widget
+treescrollx = tk.Scrollbar(data_frame, orient="horizontal", command=data_widget.xview) # command means update the xaxis view of the widget
+data_widget.configure(xscrollcommand=treescrollx.set, yscrollcommand=treescrolly.set) # assign the scrollbars to the Treeview Widget
+treescrollx.pack(side="bottom", fill="x") # make the scrollbar fill the x axis of the Treeview widget
+treescrolly.pack(side="right", fill="y") # make the scrollbar fill the y axis of the Treeview widget
+data_widget.pack(
+    fill='x',
+    **padding
+)
+
+save_frame = ttk.LabelFrame(root, text='Save')
+ttk.Button(save_frame, text="Save", command=save_button).pack(
+    side=tk.LEFT,
+    **padding
+)   
+ttk.Button(save_frame, text="Test", command=test_button).pack(
+    side=tk.LEFT,
+    **padding
+)
+save_frame.pack(
+    anchor=tk.W,
+    fill='x',
+    **padding
+)
 
 root.mainloop()
