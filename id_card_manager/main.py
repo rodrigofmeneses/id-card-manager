@@ -1,6 +1,6 @@
 import tkinter as tk
-from tkinter.filedialog import askdirectory, askopenfilename, asksaveasfile
-from tkinter import ttk
+from tkinter.filedialog import askdirectory
+from tkinter import ttk, messagebox
 import pandas as pd
 import os
 from pprint import pprint
@@ -9,7 +9,7 @@ from pprint import pprint
 ''' Diretório raiz deve ter a seguinte estrutura
 ORGÃO/
     dados/
-        dados.csv
+        ps_dados.csv
         ps_frente.txt
         ps_verso.txt
     fotos/
@@ -21,13 +21,17 @@ def find_button():
     dialog_path = askdirectory()
     try:
         assert dialog_path != ''
-        dir_path.set(dialog_path)
-
+        assert open(dialog_path + '/dados/ps_dados.csv') and os.listdir(dialog_path + '/fotos/3x4')
     except AssertionError:
-        print('Invalid dir path')
+        return
+    except FileNotFoundError:
+        msg = ('          SELECIONE A PASTA RAIZ DO ORGÃO \n VERIFIQUE A ESTRUTURA DE PASTAS E ARQUIVOS.')
+        messagebox.showerror(title='Pasta incorreta!', message=msg)
+        return
     
+    dir_path.set(dialog_path)
     # Localização das pastas e arquivos
-    data_path = f'{dir_path.get()}/dados/dados.csv'
+    data_path = f'{dir_path.get()}/dados/ps_dados.csv'
     photos_dir_path = f'{dir_path.get()}/fotos/3x4'
     
     # Leitura e tratamento dos dados
@@ -68,19 +72,28 @@ def find_button():
     for row in df_rows:
         data_tv.insert("", "end", values=row) # inserts each list into the treeview. For parameters see https://docs.python.org/3/library/tkinter.ttk.html#tkinter.ttk.Treeview.insert
 
+    # Mostrar o botão de salvar
+    save_frame.pack(
+        anchor=tk.W,
+        fill='x',
+        **padding
+    )
 
 def save_button():
     ''' Salva os arquivos no formato do photoshop'''
     try:
+        assert dir_path.get() != ''
         df.drop(
             columns=['nome', 'identidade', 'admissao']
-        ).to_csv('ps_frente.txt', index=False, sep=' ')
+        ).to_csv(f'{dir_path.get()}/dados/ps_frente.txt', index=False, sep=' ')
         
         df.drop(
             columns=['nome_guerra', 'cargo', 'foto', 'mostrar_foto', 'lotacao']
-        ).to_csv('ps_verso.txt', index=False, sep=' ')
-    except:
-        print('Error save file')
+        ).to_csv(f'{dir_path.get()}/dados/ps_verso.txt', index=False, sep=' ')
+        save_message.set('Arquivos salvos com sucesso!')
+    except AssertionError:
+        save_message.set('Falha ao salvar arquivos!')
+        print('dir path vazio')
 
 def clear_data():
     '''Limpa a visualização de data_tv'''
@@ -89,7 +102,7 @@ def clear_data():
 
 root = tk.Tk()
 root.title("ID Card Manager")
-root.geometry('1000x500')
+root.geometry('1000x450')
 
 padding = {'padx': 5, 'pady': 5}
 
@@ -104,8 +117,7 @@ ttk.Label(folder_frame, text='Folder:').pack(
     side=tk.LEFT,
     **padding
 )
-dir_path_widget = tk.Label(folder_frame, textvariable=dir_path)
-dir_path_widget.pack(
+tk.Label(folder_frame, textvariable=dir_path).pack(
     side=tk.LEFT,
     fill='x',
     **padding
@@ -142,10 +154,15 @@ ttk.Button(save_frame, text="Save", command=save_button).pack(
     side=tk.LEFT,
     **padding
 )
-save_frame.pack(
-    anchor=tk.W,
-    fill='x',
+save_message = tk.StringVar()
+ttk.Label(save_frame, textvariable=save_message).pack(
+    side=tk.LEFT,
     **padding
 )
+# save_frame.pack(
+#     anchor=tk.W,
+#     fill='x',
+#     **padding
+# )
 
 root.mainloop()
