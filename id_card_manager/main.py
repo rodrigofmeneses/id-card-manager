@@ -6,82 +6,97 @@ import os
 from pprint import pprint
 
 # Script para automatizar a criação de crachás no formato
-''' Selecionar o arquivo com os dados
-    Selecionar a pasta com as fotos
-    Exibir na tela as informações
-    Criar o arquivo de leitura do photoshop
+''' Diretório raiz deve ter a seguinte estrutura
+ORGÃO/
+    dados/
+        dados.csv
+        ps_frente.txt
+        ps_verso.txt
+    fotos/
+        3x4/
 '''
 
-def find_folder_button():
-    ''' Botão 'Find Folder'.
-    Responsável por salvar o diretório onde estão as imagens 3x4,
-    escrever na tela e adicionar os novos widgets.
-    '''
+def find_button():
+    '''Localiza o diretório raiz e gera vizualização se entrada for válida.'''
     dialog_path = askdirectory()
     try:
-        assert dialog_path != '', ''
+        assert dialog_path != ''
         dir_path.set(dialog_path)
+
     except AssertionError:
         print('Invalid dir path')
-
-def save_button():
-    ''' Botão 'Save'.
-    Selecionar ou criar arquivo de saída.
-    '''
-    file = asksaveasfile(defaultextension=".txt")
-    try:
-        file.write(dir_path)
-    except:
-        print('Error save file')
-
-def test_button():
-    data_path = f'{dir_path.get()}\\dados\\dados.csv'
+    
+    # Localização das pastas e arquivos
+    data_path = f'{dir_path.get()}/dados/dados.csv'
+    photos_dir_path = f'{dir_path.get()}/fotos/3x4'
+    
+    # Leitura e tratamento dos dados
+    global df
     df = pd.read_csv(data_path)
     
-    data_widget["column"] = list(df.columns)
-    data_widget["show"] = "headings"
+    # Arquivos dentro da pasta selecionada
+    matriculas_jpg = [
+        matricula 
+        for matricula in os.listdir(photos_dir_path)
+    ]
+    # Apenas suas matrículas
+    matriculas = [
+        int(matricula.split('.')[0]) 
+        for matricula in matriculas_jpg
+    ]
+    # Composição completa de todos os funcionários
+    path_fotos = [
+        f'{photos_dir_path}/{str(matricula)}.jpg' 
+        for matricula in df.matricula
+    ]
+    # Criar coluna no df com caminho
+    df = df.assign(foto = path_fotos)
+    # Criar coluna com respeito a visibilidade
+    df = df.assign(mostrar_foto = len(df) * [True])
+    # Filtrar por funcionários que tem foto
+    df = df[df.matricula.isin(matriculas)]
 
-    for column in data_widget["columns"]:
-        data_widget.heading(column, text=column) # let the column heading = column name
+    # Exibir na tela
+    clear_data()
+    data_tv["column"] = list(df.columns)
+    data_tv["show"] = "headings"
+
+    for column in data_tv["columns"]:
+        data_tv.heading(column, text=column) # let the column heading = column name
 
     df_rows = df.to_numpy().tolist() # turns the dataframe into a list of lists
     for row in df_rows:
-        data_widget.insert("", "end", values=row) # inserts each list into the treeview. For parameters see https://docs.python.org/3/library/tkinter.ttk.html#tkinter.ttk.Treeview.insert
+        data_tv.insert("", "end", values=row) # inserts each list into the treeview. For parameters see https://docs.python.org/3/library/tkinter.ttk.html#tkinter.ttk.Treeview.insert
 
-    # Arquivos dentro da pasta selecionada
-    # matriculas_jpg = [
-    #     matricula 
-    #     for matricula in os.listdir(dir_path.get())
-    # ]
-    # Apenas suas matrículas
-    # matriculas_dir_path = [
-    #     int(matricula.split('.')[0]) 
-    #     for matricula in matriculas_jpg
-    # ]
-    # Composição completa de todos os funcionários
-    # path_fotos = [
-    #     dir_path.get() + '/' +  str(matricula) + '.jpg' 
-    #     for matricula in df.matricula
-    # ]    
-    # # Criar coluna no df com caminho
-    # df = df.assign(foto = path_fotos)
-    # # Criar coluna com respeito a visibilidade
-    # df = df.assign(mostrar_foto = len(df) * [True])
-    # # Filtrar por funcionários que tem foto
-    # df = df[df.matricula.isin(matriculas_dir_path)]
+
+def save_button():
+    ''' Salva os arquivos no formato do photoshop'''
+    try:
+        df.drop(
+            columns=['nome', 'identidade', 'admissao']
+        ).to_csv('ps_frente.txt', index=False, sep=' ')
+        
+        df.drop(
+            columns=['nome_guerra', 'cargo', 'foto', 'mostrar_foto', 'lotacao']
+        ).to_csv('ps_verso.txt', index=False, sep=' ')
+    except:
+        print('Error save file')
+
+def clear_data():
+    '''Limpa a visualização de data_tv'''
+    data_tv.delete(*data_tv.get_children())
 
 
 root = tk.Tk()
 root.title("ID Card Manager")
 root.geometry('1000x500')
 
-# mainframe = ttk.Frame(root, padding='3 3 3 3')
 padding = {'padx': 5, 'pady': 5}
 
 folder_frame = ttk.LabelFrame(root, text='Folder')
 
 dir_path = tk.StringVar()
-ttk.Button(folder_frame, text="Find", command=find_folder_button).pack(
+ttk.Button(folder_frame, text="Find", command=find_button).pack(
     side=tk.LEFT,
     **padding
 )
@@ -105,25 +120,25 @@ data_frame.pack(
     fill='x',
     **padding
 )
-
-data_widget = ttk.Treeview(data_frame)
-
-treescrolly = tk.Scrollbar(data_frame, orient="vertical", command=data_widget.yview) # command means update the yaxis view of the widget
-treescrollx = tk.Scrollbar(data_frame, orient="horizontal", command=data_widget.xview) # command means update the xaxis view of the widget
-data_widget.configure(xscrollcommand=treescrollx.set, yscrollcommand=treescrolly.set) # assign the scrollbars to the Treeview Widget
-treescrollx.pack(side="bottom", fill="x") # make the scrollbar fill the x axis of the Treeview widget
-treescrolly.pack(side="right", fill="y") # make the scrollbar fill the y axis of the Treeview widget
-data_widget.pack(
+data_tv = ttk.Treeview(data_frame)
+treescrolly = tk.Scrollbar(data_frame, orient="vertical", command=data_tv.yview) # command means update the yaxis view of the widget
+treescrollx = tk.Scrollbar(data_frame, orient="horizontal", command=data_tv.xview) # command means update the xaxis view of the widget
+data_tv.configure(xscrollcommand=treescrollx.set, yscrollcommand=treescrolly.set) # assign the scrollbars to the Treeview Widget
+treescrollx.pack(
+    side="bottom",
+    fill="x"
+) # make the scrollbar fill the x axis of the Treeview widget
+treescrolly.pack(
+    side="right",
+    fill="y"
+) # make the scrollbar fill the y axis of the Treeview widget
+data_tv.pack(
     fill='x',
     **padding
 )
 
 save_frame = ttk.LabelFrame(root, text='Save')
 ttk.Button(save_frame, text="Save", command=save_button).pack(
-    side=tk.LEFT,
-    **padding
-)   
-ttk.Button(save_frame, text="Test", command=test_button).pack(
     side=tk.LEFT,
     **padding
 )
