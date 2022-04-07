@@ -1,32 +1,37 @@
 import os
 import pandas as pd
-from pprint import pprint
 import tkinter as tk
 from tkinter.filedialog import askdirectory
 from tkinter import messagebox, ttk
 
 # Script para automatizar a criação de crachás no formato
 """ Diretório raiz deve ter a seguinte estrutura
-ORGÃO/
-    dados/
-        ps_dados.csv
-        ps_frente.txt
-        ps_verso.txt
-    fotos/
-        3x4/
+dados/
+    ps_dados.csv
+    ps_frente.txt
+    ps_verso.txt
+Orgaos
+    ORGÃO/
+        fotos/
+            3x4/
 """
 
 
 def find_button():
     """Localiza o diretório raiz e gera vizualização se entrada for válida."""
+    global df
+    global data_path
     dialog_path = askdirectory()
+    data_path = dialog_path[:dialog_path.rindex('/')]
+    data_path = data_path[:data_path.rindex('/')]
+    file_path = data_path + '/dados/ps_dados.csv'
     try:
         assert dialog_path != ''
-        assert open(dialog_path + '/dados/ps_dados.csv') and os.listdir(
+        assert open(file_path) and os.listdir(
             dialog_path + '/fotos/3x4'
         )
     except AssertionError:
-        return
+        return 'Assertion Error'
     except FileNotFoundError:
         msg = f'          SELECIONE A PASTA RAIZ DO ORGÃO \n VERIFIQUE A ESTRUTURA DE PASTAS E ARQUIVOS.'
         messagebox.showerror(title='Pasta incorreta!', message=msg)
@@ -34,12 +39,10 @@ def find_button():
 
     dir_path.set(dialog_path)
     # Localização das pastas e arquivos
-    data_path = f'{dir_path.get()}/dados/ps_dados.csv'
     photos_dir_path = f'{dir_path.get()}/fotos/3x4'
 
     # Leitura e tratamento dos dados
-    global df
-    df = pd.read_csv(data_path, sep=';')
+    df = pd.read_csv(file_path, sep=';')
     df.fillna(0, inplace=True)
     df.matricula = [int(mat) for mat in df.matricula]
     df.identidade = [int(mat) for mat in df.identidade]
@@ -85,13 +88,13 @@ def save_button():
     """Salva os arquivos no formato do photoshop"""
     try:
         assert dir_path.get() != ''
-        df.drop(columns=['nome', 'identidade', 'admissao']).to_csv(
-            f'{dir_path.get()}/dados/ps_frente.txt', index=False, sep=' '
-        )
+        df.drop(
+            columns=['nome', 'identidade', 'admissao']
+        ).to_csv(f'{data_path}/dados/ps_frente.csv', index=False)
 
         df.drop(
             columns=['nome_guerra', 'cargo', 'foto', 'mostrar_foto', 'lotacao']
-        ).to_csv(f'{dir_path.get()}/dados/ps_verso.txt', index=False, sep=' ')
+        ).to_csv(f'{dir_path.get()}/dados/ps_verso.csv', index=False)
         save_message.set('Arquivos salvos com sucesso!')
     except AssertionError:
         save_message.set('Falha ao salvar arquivos!')
@@ -105,7 +108,7 @@ def clear_data():
 
 root = tk.Tk()
 root.title('ID Card Manager')
-root.geometry('1900x450')
+root.geometry('1700x450')
 
 padding = {'padx': 5, 'pady': 5}
 
