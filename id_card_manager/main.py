@@ -94,7 +94,7 @@ def save_button():
 
         df.drop(
             columns=['nome_guerra', 'cargo', 'foto', 'mostrar_foto', 'lotacao']
-        ).to_csv(f'{dir_path.get()}/dados/ps_verso.csv', index=False)
+        ).to_csv(f'{data_path}/dados/ps_verso.csv', index=False)
         save_message.set('Arquivos salvos com sucesso!')
     except AssertionError:
         save_message.set('Falha ao salvar arquivos!')
