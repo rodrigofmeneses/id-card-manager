@@ -1,6 +1,6 @@
-import os
 import pandas as pd
 import tkinter as tk
+from pathlib import Path
 from tkinter.filedialog import askdirectory
 from tkinter import messagebox, ttk
 
@@ -8,8 +8,6 @@ from tkinter import messagebox, ttk
 """ Diretório raiz deve ter a seguinte estrutura
 dados/
     ps_dados.csv
-    ps_frente.txt
-    ps_verso.txt
 Orgaos
     ORGÃO/
         fotos/
@@ -21,36 +19,37 @@ def find_button():
     """Localiza o diretório raiz e gera vizualização se entrada for válida."""
     global df
     global data_path
-    dialog_path = askdirectory()
-    data_path = dialog_path[:dialog_path.rindex('/')]
-    data_path = data_path[:data_path.rindex('/')]
-    file_path = data_path + '/dados/ps_dados.csv'
-    try:
-        assert dialog_path != ''
-        assert open(file_path) and os.listdir(
-            dialog_path + '/fotos/3x4'
-        )
-    except AssertionError:
-        return 'Assertion Error'
-    except FileNotFoundError:
-        msg = f'          SELECIONE A PASTA RAIZ DO ORGÃO \n VERIFIQUE A ESTRUTURA DE PASTAS E ARQUIVOS.'
+
+    orgao_path = Path(str(askdirectory()))
+
+    # Verificação da pasta raiz
+    if not all([(orgao_path / 'fotos/3x4').exists(),
+                (orgao_path.parent.parent / 'dados').exists()]):
+        msg = f'          SELECIONE A PASTA RAIZ DO ORGÃO \n VERIFIQUE A ESTRUTURA DE PASTAS.'
         messagebox.showerror(title='Pasta incorreta!', message=msg)
         return
 
-    dir_path.set(dialog_path)
-    # Localização das pastas e arquivos
-    photos_dir_path = f'{dir_path.get()}/fotos/3x4'
 
     # Leitura e tratamento dos dados
-    df = pd.read_csv(file_path, sep=';')
+    try:
+        file_path = orgao_path.parent.parent / 'dados/ps_dados.csv'
+        df = pd.read_csv(file_path, sep=';')
+    except FileNotFoundError:
+        messagebox.showerror(
+            title='Arquivo não encontrado', 
+            msg='ARQUIVO NÃO ENCONTRADO'
+        )
+        return
+
     df.fillna(0, inplace=True)
     df.matricula = [int(mat) for mat in df.matricula]
     df.identidade = [int(mat) for mat in df.identidade]
 
-    # Arquivos dentro da pasta selecionada
-    matriculas_jpg = [matricula for matricula in os.listdir(photos_dir_path)]
-    # Apenas suas matrículas
-    matriculas = [int(matricula.split('.')[0]) for matricula in matriculas_jpg]
+    # matrículas dentro da pasta
+    photos_dir_path = orgao_path / 'fotos/3x4'
+    matriculas_pasta = [
+        int(matricula.name.split('.')[0]) for matricula in photos_dir_path.iterdir()
+    ]
     # Composição completa de todos os funcionários
     path_fotos = [
         f'{photos_dir_path}/{str(matricula)}.jpg' for matricula in df.matricula
@@ -60,9 +59,10 @@ def find_button():
     # Criar coluna com respeito a visibilidade
     df = df.assign(mostrar_foto=len(df) * [True])
     # Filtrar por funcionários que tem foto
-    df = df[df.matricula.isin(matriculas)]
+    df = df[df.matricula.isin(matriculas_pasta)]
 
     # Exibir na tela
+    dir_path.set(orgao_path)
     clear_data()
     data_tv['column'] = list(df.columns)
     data_tv['show'] = 'headings'
