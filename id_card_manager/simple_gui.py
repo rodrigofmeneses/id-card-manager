@@ -77,6 +77,17 @@ def search_button(root_path):
 
     return df, df.values.tolist()
 
+def save_button(df, data_path):
+    # Salva os arquivos
+    df.drop(
+        columns=['nome', 'identidade', 'admissao']
+    ).to_csv(f'{data_path}/dados/ps_frente.csv', index=False)
+
+    df.drop(
+        columns=['nome_guerra', 'cargo', 'foto', 'mostrar_foto', 'lotacao']
+    ).to_csv(f'{data_path}/dados/ps_verso.csv', index=False)
+
+    return f'Arquivos Salvos com sucesso em: \n {data_path / "dados"}'
 
 while True:
     event, values = window.read()
@@ -89,15 +100,7 @@ while True:
             window['--SAVE-FRAME--'].update(visible = True)
         case '--SALVAR--':
             data_path = root_path.parent.parent
-            # Salva os arquivos
-            df.drop(
-                columns=['nome', 'identidade', 'admissao']
-            ).to_csv(f'{data_path}/dados/ps_frente.csv', index=False)
-
-            df.drop(
-                columns=['nome_guerra', 'cargo', 'foto', 'mostrar_foto', 'lotacao']
-            ).to_csv(f'{data_path}/dados/ps_verso.csv', index=False)
-            save_text = f'Arquivos Salvos com sucesso em: \n {data_path / "dados"}'
+            save_text = save_button(df, data_path)
             window['--SAVE-TEXT--'].update(save_text)
         case None:
             break
